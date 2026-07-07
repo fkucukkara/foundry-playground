@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Helpdesk Copilot</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 1.25rem; }
+  #log { border: 1px solid #ccc; border-radius: 8px; height: 420px; overflow-y: auto; padding: 1rem; margin-bottom: 1rem; }
+  .msg { margin-bottom: 0.75rem; white-space: pre-wrap; }
+  .user { color: #0b5fff; }
+  .assistant { color: #222; }
+  form { display: flex; gap: 0.5rem; }
+  input { flex: 1; padding: 0.5rem; }
+  button { padding: 0.5rem 1rem; }
+</style>
+</head>
+<body>
+  <h1>🎫 Helpdesk Copilot</h1>
+  <p>Ask an IT/HR policy question, check a ticket, or ask to open a new one. Try: <em>"How many vacation days do I get?"</em></p>
+  <div id="log"></div>
+  <form id="chat-form">
+    <input id="message" type="text" placeholder="Type your message..." autocomplete="off" maxlength="4000" required />
+    <button type="submit">Send</button>
+  </form>
+
+  <script>
+    const sessionId = crypto.randomUUID();
+    const log = document.getElementById('log');
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('message');
+
+    function addMessage(text, cssClass) {
+      const div = document.createElement('div');
+      div.className = `msg ${cssClass}`;
+      div.textContent = (cssClass === 'user' ? 'You: ' : 'Copilot: ') + text;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+      addMessage(message, 'user');
+      input.value = '';
+      addMessage('...', 'assistant');
+
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, message })
+      });
+
+      log.removeChild(log.lastChild);
+      if (!response.ok) {
+        addMessage('Something went wrong. Please try again.', 'assistant');
+        return;
+      }
+      const data = await response.json();
+      addMessage(data.reply, 'assistant');
+    });
+  </script>
+</body>
+</html>

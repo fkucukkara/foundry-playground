@@ -1,0 +1,68 @@
+@Helpdesk.Api_HostAddress = http://localhost:5231
+
+### Health check
+GET {{Helpdesk.Api_HostAddress}}/healthz
+Accept: application/json
+
+### List tickets for a user (seeded: alice has ticket 123)
+GET {{Helpdesk.Api_HostAddress}}/api/tickets?userId=alice
+Accept: application/json
+
+### List tickets for a user with no tickets
+GET {{Helpdesk.Api_HostAddress}}/api/tickets?userId=bob
+Accept: application/json
+
+### Get status of the seeded ticket
+GET {{Helpdesk.Api_HostAddress}}/api/tickets/123
+Accept: application/json
+
+### Get status of a ticket that doesn't exist -> 404
+GET {{Helpdesk.Api_HostAddress}}/api/tickets/999
+Accept: application/json
+
+### Create a new IT ticket
+POST {{Helpdesk.Api_HostAddress}}/api/tickets
+Content-Type: application/json
+
+{
+  "userId": "alice",
+  "category": "IT",
+  "subject": "Reset laptop password",
+  "description": "Locked out after too many failed attempts, need a password reset."
+}
+
+### Create a new HR ticket
+POST {{Helpdesk.Api_HostAddress}}/api/tickets
+Content-Type: application/json
+
+{
+  "userId": "bob",
+  "category": "HR",
+  "subject": "Expense reimbursement question",
+  "description": "Need help submitting a reimbursement for a client dinner."
+}
+
+### Create ticket with invalid payload -> 400 with validation errors
+POST {{Helpdesk.Api_HostAddress}}/api/tickets
+Content-Type: application/json
+
+{
+  "userId": "",
+  "category": "Finance",
+  "subject": "",
+  "description": ""
+}
+
+### Get leave balance for alice
+GET {{Helpdesk.Api_HostAddress}}/api/leave-balance/alice
+Accept: application/json
+
+### Get leave balance for bob
+GET {{Helpdesk.Api_HostAddress}}/api/leave-balance/bob
+Accept: application/json
+
+### Get leave balance for a user that doesn't exist -> 404
+GET {{Helpdesk.Api_HostAddress}}/api/leave-balance/carol
+Accept: application/json
+
+###

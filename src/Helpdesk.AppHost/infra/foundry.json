@@ -1,0 +1,151 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.44.1.10279",
+      "templateHash": "2904970853922144398"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Primary location for the Foundry resources."
+      }
+    },
+    "principalId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional principal id (e.g. your own user) to grant Foundry data-plane access for local testing."
+      }
+    },
+    "appPrincipalId": {
+      "type": "string",
+      "metadata": {
+        "description": "Principal id of the Helpdesk.Web container app identity."
+      }
+    },
+    "modelName": {
+      "type": "string",
+      "defaultValue": "gpt-4o-mini",
+      "metadata": {
+        "description": "Model to deploy for the chat agent."
+      }
+    },
+    "modelVersion": {
+      "type": "string",
+      "defaultValue": "2024-07-18",
+      "metadata": {
+        "description": "Model version."
+      }
+    },
+    "modelCapacity": {
+      "type": "int",
+      "defaultValue": 10,
+      "metadata": {
+        "description": "Model capacity."
+      }
+    }
+  },
+  "variables": {
+    "resourceToken": "[uniqueString(resourceGroup().id)]",
+    "abbrs": {
+      "aiServices": "aisfoundry"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2025-04-01-preview",
+      "name": "[format('{0}{1}', variables('abbrs').aiServices, variables('resourceToken'))]",
+      "location": "[parameters('location')]",
+      "kind": "AIServices",
+      "sku": {
+        "name": "S0"
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "customSubDomainName": "[format('{0}{1}', variables('abbrs').aiServices, variables('resourceToken'))]",
+        "publicNetworkAccess": "Enabled",
+        "disableLocalAuth": true
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/deployments",
+      "apiVersion": "2025-04-01-preview",
+      "name": "[format('{0}/{1}', format('{0}{1}', variables('abbrs').aiServices, variables('resourceToken')), parameters('modelName'))]",
+      "sku": {
+        "name": "GlobalStandard",
+        "capacity": "[parameters('modelCapacity')]"
+      },
+      "properties": {
+        "model": {
+          "format": "OpenAI",
+          "name": "[parameters('modelName')]",
+          "version": "[parameters('modelVersion')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', format('{0}{1}', variables('abbrs').aiServices, variables('resourceToken')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/projects",
+      "apiVersion": "2025-04-01-preview",
+      "name": "[format('{0}/{1}', format('{0}{1}', variables('abbrs').aiServices, variables('resourceToken')), 'helpdesk-copilot')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', format('{0}{1}', variables('abbrs').aiServices, variables('resourceToken')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[resourceId('Microsoft.CognitiveServices/accounts', format('{0}{1}', variables('abbrs').aiServices, variables('resourceToken')))]",
+      "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', format('{0}{1}', variables('abbrs').aiServices, variables('resourceToken'))), parameters('appPrincipalId'), 'CognitiveServicesUser')]",
+      "properties": {
+        "principalId": "[parameters('appPrincipalId')]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', format('{0}{1}', variables('abbrs').aiServices, variables('resourceToken')))]"
+      ]
+    },
+    {
+      "condition": "[not(empty(parameters('principalId')))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[resourceId('Microsoft.CognitiveServices/accounts', format('{0}{1}', variables('abbrs').aiServices, variables('resourceToken')))]",
+      "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', format('{0}{1}', variables('abbrs').aiServices, variables('resourceToken'))), parameters('principalId'), 'CognitiveServicesUser')]",
+      "properties": {
+        "principalId": "[parameters('principalId')]",
+        "principalType": "User",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', format('{0}{1}', variables('abbrs').aiServices, variables('resourceToken')))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "projectEndpoint": {
+      "type": "string",
+      "value": "[format('{0}api/projects/{1}', reference(resourceId('Microsoft.CognitiveServices/accounts', format('{0}{1}', variables('abbrs').aiServices, variables('resourceToken'))), '2025-04-01-preview').endpoint, 'helpdesk-copilot')]"
+    },
+    "modelDeploymentName": {
+      "type": "string",
+      "value": "[parameters('modelName')]"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+name: helpdesk-copilot
+metadata:
+  template: helpdesk-copilot@0.1.0
+
+# Infra is no longer hand-written Bicep: azd derives it dynamically from the Aspire app model in
+# src/Helpdesk.AppHost/AppHost.cs (Container Apps, ACR, environment, service discovery wiring), plus
+# src/Helpdesk.AppHost/infra/foundry.bicep for the Foundry-specific resources referenced from that app model.
+services:
+  app:
+    project: src/Helpdesk.AppHost/Helpdesk.AppHost.csproj
+    language: dotnet
+    host: containerapp

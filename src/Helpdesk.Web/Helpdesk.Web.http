@@ -1,0 +1,70 @@
+@Helpdesk.Web_HostAddress = http://localhost:5087
+
+### Health check
+GET {{Helpdesk.Web_HostAddress}}/healthz
+Accept: application/json
+
+### Chat: knowledge-base question (grounded via File Search, e.g. HR leave policy)
+POST {{Helpdesk.Web_HostAddress}}/api/chat
+Content-Type: application/json
+
+{
+  "sessionId": "test-session-1",
+  "message": "How many vacation days do I get?"
+}
+
+### Chat: tool call - check status of the seeded ticket
+POST {{Helpdesk.Web_HostAddress}}/api/chat
+Content-Type: application/json
+
+{
+  "sessionId": "test-session-1",
+  "message": "What's the status of ticket #123?"
+}
+
+### Chat: tool call - create a new ticket
+POST {{Helpdesk.Web_HostAddress}}/api/chat
+Content-Type: application/json
+
+{
+  "sessionId": "test-session-1",
+  "message": "Reset my laptop password, please open a ticket for alice."
+}
+
+### Chat: knowledge-base question (IT password reset policy)
+POST {{Helpdesk.Web_HostAddress}}/api/chat
+Content-Type: application/json
+
+{
+  "sessionId": "test-session-2",
+  "message": "What's the process for requesting new hardware?"
+}
+
+### Chat: invalid request - missing sessionId -> 400
+POST {{Helpdesk.Web_HostAddress}}/api/chat
+Content-Type: application/json
+
+{
+  "sessionId": "",
+  "message": "Hello"
+}
+
+### Chat: invalid request - empty message -> 400
+POST {{Helpdesk.Web_HostAddress}}/api/chat
+Content-Type: application/json
+
+{
+  "sessionId": "test-session-1",
+  "message": ""
+}
+
+### Chat: rate limit test - send this request 11+ times within a minute to trigger 429
+POST {{Helpdesk.Web_HostAddress}}/api/chat
+Content-Type: application/json
+
+{
+  "sessionId": "rate-limit-test",
+  "message": "Hi"
+}
+
+###

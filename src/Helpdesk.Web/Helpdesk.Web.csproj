@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Helpdesk.Agent\Helpdesk.Agent.csproj" />
+    <ProjectReference Include="..\Helpdesk.ServiceDefaults\Helpdesk.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.21.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Bake the knowledge base into the build/publish output (docs/knowledge-base) so File Search can
+         index it on startup - this now covers both `dotnet run`/AppHost and the SDK-container-published
+         image produced by azd, replacing the removed Dockerfile's explicit COPY. -->
+    <Content Include="..\..\docs\knowledge-base\**\*.md" Link="docs\knowledge-base\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableSdkContainerSupport>true</EnableSdkContainerSupport>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>9cd51028-9732-42ef-a721-b0e22310deef</UserSecretsId>
+  </PropertyGroup>
+
+</Project>

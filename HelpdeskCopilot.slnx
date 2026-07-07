@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Helpdesk.Agent/Helpdesk.Agent.csproj" />
+    <Project Path="src/Helpdesk.Api/Helpdesk.Api.csproj" />
+    <Project Path="src/Helpdesk.AppHost/Helpdesk.AppHost.csproj" />
+    <Project Path="src/Helpdesk.ServiceDefaults/Helpdesk.ServiceDefaults.csproj" />
+    <Project Path="src/Helpdesk.Web/Helpdesk.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="src/Helpdesk.Api.Tests/Helpdesk.Api.Tests.csproj" />
+  </Folder>
+</Solution>
