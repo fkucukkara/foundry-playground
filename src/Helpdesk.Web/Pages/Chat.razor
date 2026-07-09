@@ -27,7 +27,10 @@
                     <div class="msg-avatar">HC</div>
                 }
                 <div class="msg-bubble @(msg.IsUser ? "bubble-user" : "bubble-bot")">
-                    <div class="msg-text">@msg.Text</div>
+                    <div class="msg-text">
+                        @if (msg.IsUser) { @msg.Text }
+                        else { @RenderMarkdown(msg.Text) }
+                    </div>
                     <div class="msg-time">@msg.Timestamp.ToString("HH:mm")</div>
                 </div>
             </div>
@@ -59,13 +62,19 @@
                 @onclick="SendMessage"
                 disabled="@(_isTyping || string.IsNullOrWhiteSpace(_inputText))"
                 title="Send (Enter)">
-            ➤
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
     </div>
     <div class="input-hint">Press Enter to send · Shift+Enter for new line · @(_inputText.Length)/4000</div>
 </div>
 
 @code {
+    private static readonly MarkdownPipeline _mdPipeline =
+        new MarkdownPipelineBuilder().UseAdvancedExtensions().DisableHtml().Build();
+
+    private static MarkupString RenderMarkdown(string text) =>
+        new(Markdown.ToHtml(text, _mdPipeline));
+
     private readonly string _sessionId = Guid.NewGuid().ToString("N");
     private readonly List<ChatMsg> _messages = [];
 
