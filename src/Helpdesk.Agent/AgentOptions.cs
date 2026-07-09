@@ -26,4 +26,7 @@ public class AgentOptions
     public string KnowledgeBaseDirectory { get; set; } = "docs/knowledge-base";
 
     public const string AgentName = "helpdesk-copilot";
+
+    /// <summary>Maximum seconds to wait for a single agent run to reach a terminal state. Default: 90.</summary>
+    public int RunTimeoutSeconds { get; set; } = 90;
 }

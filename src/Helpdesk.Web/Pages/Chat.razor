@@ -1,0 +1,136 @@
+@page "/"
+@rendermode InteractiveServer
+@inject HelpdeskAgentService Agent
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<PageTitle>Helpdesk Copilot</PageTitle>
+
+<div class="chat-wrapper">
+    <div class="chat-header">
+        <div class="chat-avatar">HC</div>
+        <div class="chat-header-info">
+            <span class="chat-title">Helpdesk Copilot</span>
+            <span class="chat-subtitle @(_isTyping ? "status-thinking" : "status-ready")">
+                @(_isTyping ? "Thinking…" : "Ready")
+            </span>
+        </div>
+        <button class="clear-btn" @onclick="ClearChat" title="Start new conversation" disabled="@_isTyping">↺ New</button>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+        @foreach (var msg in _messages)
+        {
+            <div class="msg-row @(msg.IsUser ? "row-user" : "row-bot")">
+                @if (!msg.IsUser)
+                {
+                    <div class="msg-avatar">HC</div>
+                }
+                <div class="msg-bubble @(msg.IsUser ? "bubble-user" : "bubble-bot")">
+                    <div class="msg-text">@msg.Text</div>
+                    <div class="msg-time">@msg.Timestamp.ToString("HH:mm")</div>
+                </div>
+            </div>
+        }
+
+        @if (_isTyping)
+        {
+            <div class="msg-row row-bot">
+                <div class="msg-avatar">HC</div>
+                <div class="typing-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="chat-input-area">
+        <textarea @ref="_inputRef"
+                  @bind="_inputText"
+                  @bind:event="oninput"
+                  @onkeydown="HandleKeyDown"
+                  placeholder="Ask about IT policies, HR topics, or support tickets…"
+                  rows="1"
+                  maxlength="4000"
+                  disabled="@_isTyping"
+                  class="chat-input"
+                  aria-label="Message input" />
+        <button class="send-btn"
+                @onclick="SendMessage"
+                disabled="@(_isTyping || string.IsNullOrWhiteSpace(_inputText))"
+                title="Send (Enter)">
+            ➤
+        </button>
+    </div>
+    <div class="input-hint">Press Enter to send · Shift+Enter for new line · @(_inputText.Length)/4000</div>
+</div>
+
+@code {
+    private readonly string _sessionId = Guid.NewGuid().ToString("N");
+    private readonly List<ChatMsg> _messages = [];
+
+    private string _inputText = "";
+    private bool _isTyping;
+    private ElementReference _inputRef;
+
+    protected override void OnInitialized()
+    {
+        _messages.Add(new ChatMsg(
+            "Hi! I'm **Helpdesk Copilot**. Ask me about IT policies, HR leave, or open/check support tickets.\n\nExample: _\"How do I reset my password?\"_ or _\"What's the status of ticket 42?\"_",
+            IsUser: false, DateTimeOffset.Now));
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JS.InvokeVoidAsync("scrollToBottom", "chat-messages");
+        if (firstRender)
+            await JS.InvokeVoidAsync("focusElement", _inputRef);
+    }
+
+    private async Task SendMessage()
+    {
+        var text = _inputText.Trim();
+        if (string.IsNullOrWhiteSpace(text) || _isTyping) return;
+
+        _messages.Add(new ChatMsg(text, IsUser: true, DateTimeOffset.Now));
+        _inputText = "";
+        _isTyping = true;
+        StateHasChanged();
+        await JS.InvokeVoidAsync("scrollToBottom", "chat-messages");
+
+        try
+        {
+            var reply = await Agent.ChatAsync(_sessionId, text);
+            _messages.Add(new ChatMsg(reply, IsUser: false, DateTimeOffset.Now));
+        }
+        catch (Exception)
+        {
+            _messages.Add(new ChatMsg("Sorry, something went wrong. Please try again.", IsUser: false, DateTimeOffset.Now));
+        }
+        finally
+        {
+            _isTyping = false;
+            StateHasChanged();
+            await JS.InvokeVoidAsync("scrollToBottom", "chat-messages");
+            await JS.InvokeVoidAsync("focusElement", _inputRef);
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+            await SendMessage();
+    }
+
+    private void ClearChat()
+    {
+        _messages.Clear();
+        _messages.Add(new ChatMsg(
+            "Hi! I'm **Helpdesk Copilot**. Ask me about IT policies, HR leave, or open/check support tickets.",
+            IsUser: false, DateTimeOffset.Now));
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    private record ChatMsg(string Text, bool IsUser, DateTimeOffset Timestamp);
+}

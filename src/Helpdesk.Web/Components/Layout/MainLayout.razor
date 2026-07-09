@@ -1,0 +1,17 @@
+@inherits LayoutComponentBase
+
+<div class="app-shell">
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">HC</div>
+            <span class="brand-name">Helpdesk Copilot</span>
+        </div>
+        <ul class="nav-links">
+            <li><NavLink href="/" Match="NavLinkMatch.All">💬 Chat</NavLink></li>
+        </ul>
+        <div class="sidebar-footer">Powered by Azure AI Foundry</div>
+    </nav>
+    <main class="main-content">
+        @Body
+    </main>
+</div>
