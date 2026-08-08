@@ -1,7 +1,7 @@
-using System.Collections.Concurrent;
 using Azure.AI.Agents.Persistent;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Collections.Concurrent;
 
 namespace Helpdesk.Agent;
 

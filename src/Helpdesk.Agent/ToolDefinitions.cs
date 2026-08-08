@@ -1,5 +1,5 @@
-using System.Text.Json;
 using Azure.AI.Agents.Persistent;
+using System.Text.Json;
 
 namespace Helpdesk.Agent;
 

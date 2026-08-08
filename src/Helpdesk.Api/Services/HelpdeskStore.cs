@@ -1,5 +1,5 @@
-using System.Collections.Concurrent;
 using Helpdesk.Api.Models;
+using System.Collections.Concurrent;
 
 namespace Helpdesk.Api.Services;
 
